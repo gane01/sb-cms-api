@@ -1,0 +1,4 @@
+docker build -t sbcontentmanager .
+docker run -d -p 8084:80 --env ASPNETCORE_ENVIRONMENT=Development --name SbContentManagerApp sbcontentmanager
+
+http://localhost:8084/swagger/index.html
