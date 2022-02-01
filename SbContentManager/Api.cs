@@ -1,8 +1,8 @@
 ﻿using SbContentManager.ContentstackApi;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using SbContentManager.Models;
 using Microsoft.AspNetCore.Mvc;
+using Refit;
 
 public static partial class Api
 {
@@ -11,7 +11,8 @@ public static partial class Api
 		app.MapGet("/contents/{templateId}/{contentId}", GetEntry); // return one or multiple entries
 		app.MapGet("/contents/{templateId}", GetEntries);
 		app.MapPost("/contents/{templateId}", CreateEntry);
-		//app.MapPut("/contents", UpdateEntry);
+		// Interestingly there`s no MapPatch in minimal api, so create one.
+		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry);
 		//app.MapGet("/assets", GetAssets);
 		//app.MapGet("/assetsFolder", GetAssetFolder);
 		//app.MapPost("/assets", UploadAsset);
@@ -73,6 +74,7 @@ public static partial class Api
 				Message = result.GetProperty("notice").GetString(),
 				Data = new Data() { Uid = uid }
 			};
+			// TODO add full url here
 			return Results.Created($"/contents/{templateId}/{uid}", response);
 		}
 		catch (Exception e) {
@@ -80,9 +82,25 @@ public static partial class Api
 		}	
     }
 
-    private static string UpdateEntry()
+	private static async Task<IResult> UpdateEntry(string templateId, string contentId, [FromBody] JsonElement content, IContentstackApi managementApi)
 	{
-		throw new NotImplementedException();
+		try
+		{
+			var result = await managementApi.UpdateEntry(templateId, contentId, content);
+			var response = new Response<Data>()
+			{
+				Message = result.GetProperty("notice").GetString(),
+				Data = new Data() { Uid = result.GetProperty("entry").GetProperty("uid").GetString() }
+			};
+			return Results.Ok(response);
+		}
+		catch (ApiException e) {
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
 	}
 
 	private static string GetAssetFolder()
