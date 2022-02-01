@@ -10,7 +10,7 @@ namespace SbContentManager.ContentstackApi
         Task<JsonNode> GetEntries(string environment, string templateId, string query);
 
         [Post("/content_types/{templateId}/entries?environment={environment}&locale=en")]
-        Task<JsonNode> CreateEntry(string environment, string templateId, [Body] JsonNode content);
+        Task<JsonElement> CreateEntry(string environment, string templateId, [Body] JsonElement content);
     
         /*
         [Post("/content_types/{templateId}/entries/{contentId}")]
