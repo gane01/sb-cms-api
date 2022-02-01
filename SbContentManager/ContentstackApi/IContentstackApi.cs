@@ -6,18 +6,18 @@ namespace SbContentManager.ContentstackApi
 {
     public interface IContentstackApi
     {
-        [Get("/content_types/{templateId}/entries?environment={environment}&locale=en&query={query}")]
-        Task<JsonElement> GetEntries(string environment, string templateId, string query);
+        [Get("/content_types/{contentType}/entries?environment={environment}&locale=en&query={query}")]
+        Task<JsonElement> GetEntries(string environment, string contentType, string query);
 
-        [Post("/content_types/{templateId}/entries?environment={environment}&locale=en")]
-        Task<JsonElement> CreateEntry(string environment, string templateId, [Body] JsonElement content);
+        [Post("/content_types/{contentType}/entries?environment={environment}&locale=en")]
+        Task<JsonElement> CreateEntry(string environment, string contentType, [Body] JsonElement entry);
 
-        [Put("/content_types/{templateId}/entries/{contentId}/?locale=en")]
-        Task<JsonElement> UpdateEntry(string templateId, string contentId, [Body] JsonElement content);
+        [Put("/content_types/{contentType}/entries/{entryId}/?locale=en")]
+        Task<JsonElement> UpdateEntry(string contentType, string entryId, [Body] JsonElement entry);
 
         /*
-        [Post("/content_types/{templateId}/entries/{contentId}")]
-        Task PublishEntry(string templateId, string environment, [Body] string testArticle);
+        [Post("/content_types/{contentType}/entries/{contentId}")]
+        Task PublishEntry(string contentType, string environment, [Body] string testArticle);
         */
     }
 }
