@@ -10,14 +10,14 @@ public static partial class Api
 	{
 		app.MapGet("/contents/{templateId}/{contentId}", GetEntry); // return one or multiple entries
 		app.MapGet("/contents/{templateId}", GetEntries);
-		app.MapPost("/contents/{templateId}", CreateEntry);
-		// Interestingly there`s no MapPatch in minimal api, so create one.
-		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry);
+		app.MapPost("/contents/{templateId}", CreateEntry);		
+		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
+		app.MapPost("/publish", PublishEntry);
 		//app.MapGet("/assets", GetAssets);
 		//app.MapGet("/assetsFolder", GetAssetFolder);
 		//app.MapPost("/assets", UploadAsset);
 		//app.MapGet("/assetsRef", GetAssetsRef);
-		//app.MapPost("/publish", Publish);
+		//
 		//app.MapGet("/map", Bar);
 	}
 
@@ -32,6 +32,7 @@ public static partial class Api
 				}
 			};
 
+			// TODO Environment string will come from env variable
 			var result = await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));
 
 			return Results.Ok(result);
@@ -54,6 +55,7 @@ public static partial class Api
 				query.Values.Add(new UidQuery() { Uid = contenId })
 			);
 
+			// TODO Environment string will come from env variable
 			var result = await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));
 
 			return Results.Ok(result);
@@ -67,6 +69,7 @@ public static partial class Api
     {
 		try
 		{
+			// TODO Environment string will come from env variable
 			var result = await managementApi.CreateEntry("development", templateId, content);
 			var uid = result.GetProperty("entry").GetProperty("uid").GetString();
 			var response = new Response<Data>()
@@ -123,8 +126,25 @@ public static partial class Api
 		throw new NotImplementedException();
 	}
 
-	private static string Publish()
+	private static async Task<IResult> PublishEntry(string templateId, string contentId, [FromBody] JsonElement publish, IContentstackApi managementApi)
 	{
-		throw new NotImplementedException();
+		try
+		{
+			var result = await managementApi.PublishEntry("development", templateId, contentId, publish);
+			var response = new Response<Data>()
+			{
+				Message = result.GetProperty("notice").GetString(),
+				Data = new Data() { Uid = contentId }
+			};
+			return Results.Ok(response);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
 	}
 }

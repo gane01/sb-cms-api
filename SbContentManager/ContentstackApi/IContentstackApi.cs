@@ -15,9 +15,7 @@ namespace SbContentManager.ContentstackApi
         [Put("/content_types/{contentType}/entries/{entryId}/?locale=en")]
         Task<JsonElement> UpdateEntry(string contentType, string entryId, [Body] JsonElement entry);
 
-        /*
-        [Post("/content_types/{contentType}/entries/{contentId}")]
-        Task PublishEntry(string contentType, string environment, [Body] string testArticle);
-        */
+        [Post("/content_types/{contentType}/entries/{entryId}/publish")]
+        Task<JsonElement> PublishEntry(string environment, string contentType, string entryId, [Body] JsonElement publish);
     }
 }
