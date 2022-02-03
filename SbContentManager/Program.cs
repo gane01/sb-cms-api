@@ -1,10 +1,25 @@
+using Microsoft.OpenApi.Models;
 using Refit;
 using SbContentManager.ContentstackApi;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1",
+            new OpenApiInfo
+            {
+                Title = "Sb Content manager AP I",
+                Version = "v0.1"
+            }
+         );
+
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        c.IncludeXmlComments(xmlPath);
+    });
 
 builder.Services.AddTransient<HttpHeaderHandler>();
 builder.Services.AddRefitClient<IContentstackApi>()

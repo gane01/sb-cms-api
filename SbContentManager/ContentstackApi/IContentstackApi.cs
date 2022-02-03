@@ -17,5 +17,8 @@ namespace SbContentManager.ContentstackApi
 
         [Post("/content_types/{contentType}/entries/{entryId}/publish")]
         Task<JsonElement> PublishEntry(string environment, string contentType, string entryId, [Body] JsonElement publish);
+
+        [Get("/assets?environment={environment}&query={query}")]
+        Task<JsonElement> GetAssets(string environment, string query);
     }
 }

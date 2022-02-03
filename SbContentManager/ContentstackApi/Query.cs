@@ -13,4 +13,13 @@ namespace SbContentManager.ContentstackApi
         [JsonPropertyName("uid")]
         public string? Uid { get; set; }
     }
+
+    public class AssetQuery
+    {
+        [JsonPropertyName("uid")]
+        public string? Uid { get; set; }
+
+        [JsonPropertyName("publish_details.locale")]
+        public string? Locale { get; set; }
+    }
 }

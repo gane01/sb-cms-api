@@ -13,15 +13,25 @@ public static partial class Api
 		app.MapPost("/contents/{templateId}", CreateEntry);		
 		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
 		app.MapPost("/publish", PublishEntry);
-		//app.MapGet("/assets", GetAssets);
+		app.MapGet("/assets/{assetId}", GetAsset);
+		app.MapGet("/assets/", GetAssets);
 		//app.MapGet("/assetsFolder", GetAssetFolder);
 		//app.MapPost("/assets", UploadAsset);
 		//app.MapGet("/assetsRef", GetAssetsRef);
-		//
-		//app.MapGet("/map", Bar);
 	}
 
-    private static async Task<IResult> GetEntry(string templateId, string contentId, IContentstackApi contentStackApi)
+	/// <summary>Retrieves a specific product by unique id</summary>
+	/// <remarks>Awesomeness</remarks>
+	/// <param name="templateId" example="123">The product id</param>
+	/// <param name="contentId" example="123">The product id</param>
+	/// <response code="200">Product retrieved</response>
+	/// <response code="404">Product not found</response>
+	/// <response code="500">Oops! Can't lookup your product right now</response>
+
+#pragma warning disable CS1573 // Parameter has no matching param tag in the XML comment (but other parameters do)
+	[Microsoft.AspNetCore.Mvc.ProducesResponseType(StatusCodes.Status100Continue)]
+	private static async Task<IResult> GetEntry(string templateId, string contentId, IContentstackApi contentStackApi)
+#pragma warning restore CS1573 // Parameter has no matching param tag in the XML comment (but other parameters do)
     {
 		try
 		{
@@ -106,12 +116,58 @@ public static partial class Api
 		}
 	}
 
-	private static string GetAssetFolder()
+	private static async Task<IResult> GetAsset(string assetId, IContentstackApi contentStackApi)
 	{
-		throw new NotImplementedException();
+		try
+		{
+			var query = new OrQuery<AssetQuery>
+			{
+				Values = new List<AssetQuery>() {
+					// TODO Do we going to have only one locale ("en", shouldn`t it be more specific? eg en-us)?
+					new AssetQuery() { Uid = assetId, Locale = "en" }
+				}
+			};
+
+			// TODO Environment string will come from env variable
+			var result = await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
+			return Results.Ok(result);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
 	}
 
-	private static string GetAssets()
+	private static async Task<IResult> GetAssets(string assetIds, IContentstackApi contentStackApi)
+	{
+		// blt105156a5b14511cf,blt10e1c4b9fe115494
+		try
+		{
+			var query = new OrQuery<AssetQuery>
+			{
+				Values = new List<AssetQuery>()
+			};
+
+			assetIds.Split(",").ToList().ForEach(assetId =>
+				query.Values.Add(new AssetQuery() { Uid = assetId, Locale = "en" })
+			);
+
+			// TODO Environment string will come from env variable
+			var result = await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
+
+			return Results.Ok(result);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
+	private static string GetAssetFolder()
 	{
 		throw new NotImplementedException();
 	}
