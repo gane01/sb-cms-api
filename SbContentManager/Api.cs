@@ -15,6 +15,7 @@ public static partial class Api
 		app.MapPost("/publish", PublishEntry);
 		app.MapGet("/assets/{assetId}", GetAsset);
 		app.MapGet("/assets/", GetAssets);
+		app.MapPost("/assets/", CreateAsset);
 		//app.MapGet("/assetsFolder", GetAssetFolder);
 		//app.MapPost("/assets", UploadAsset);
 		//app.MapGet("/assetsRef", GetAssetsRef);
@@ -165,6 +166,39 @@ public static partial class Api
 		{
 			return Results.Problem(e.Message);
 		}
+	}
+
+	private static async Task<IResult> CreateAsset(HttpRequest request)
+	{
+		// parent folder: blt2a46ed8f1b1d5979
+		try
+		{
+
+			if (!request.HasFormContentType)
+			{
+				return Results.BadRequest();
+			}
+
+			var form = await request.ReadFormAsync();
+			var file = form.Files["uploadedFile"];
+			var title = form["title"];
+
+			/*
+			using var ms = new MemoryStream();
+			formFile.CopyTo(ms);
+			ByteArrayPart foo = new ByteArrayPart(ms.ToArray(), formFile.FileName);
+			var result = await contentStackApi.CreateAsset(foo, folderId, title, description, new string[] { "d" });
+			return Results.Ok(result);
+			*/
+			await Task.Delay(1000);
+			return Results.Ok($"{file.FileName} - {title}");
+		}
+		catch (ApiException e) {
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e) {
+			return Results.Problem(e.Message);
+		}		
 	}
 
 	private static string GetAssetFolder()

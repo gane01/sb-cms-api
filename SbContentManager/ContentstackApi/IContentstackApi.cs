@@ -20,5 +20,9 @@ namespace SbContentManager.ContentstackApi
 
         [Get("/assets?environment={environment}&query={query}")]
         Task<JsonElement> GetAssets(string environment, string query);
+
+        [Multipart]
+        [Post("/assets")]
+        Task<JsonElement> CreateAsset([AliasAs("asset[upload]")] ByteArrayPart file, [AliasAs("asset[parent_uid]")] string folderId, [AliasAs("asset[title]")] string title, [AliasAs("asset[description]")] string description, [AliasAs("asset[description]")] string[] tags);
     }
 }
