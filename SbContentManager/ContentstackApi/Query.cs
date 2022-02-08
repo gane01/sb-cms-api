@@ -22,4 +22,13 @@ namespace SbContentManager.ContentstackApi
         [JsonPropertyName("publish_details.locale")]
         public string? Locale { get; set; }
     }
+
+    public partial class FolderQuery
+    {
+        [JsonPropertyName("is_dir")]
+        public bool IsDir { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+    }
 }

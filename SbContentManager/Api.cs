@@ -12,13 +12,15 @@ public static partial class Api
 		app.MapGet("/contents/{templateId}", GetEntries);
 		app.MapPost("/contents/{templateId}", CreateEntry);		
 		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
-		app.MapPost("/publish", PublishEntry);
+		app.MapPost("/contents/publish", PublishEntry);
 		app.MapGet("/assets/{assetId}", GetAsset);
 		app.MapGet("/assets/", GetAssets);
 		app.MapPost("/assets/", CreateAsset);
-		//app.MapGet("/assetsFolder", GetAssetFolder);
-		//app.MapPost("/assets", UploadAsset);
-		//app.MapGet("/assetsRef", GetAssetsRef);
+		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
+		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
+		app.MapPost("/assets/publish/{assetId}", PublishAsset); // Todo: make PublishEntry like this
+		// Todo: add asset/entry bulk publish,
+		// Todo: add asset/entry bulk copy,
 	}
 
 	/// <summary>Retrieves a specific product by unique id</summary>
@@ -117,6 +119,30 @@ public static partial class Api
 		}
 	}
 
+	private static async Task<IResult> PublishEntry(string templateId, string contentId, [FromBody] JsonElement publish, IContentstackApi managementApi)
+	{
+		try
+		{
+			// Todo: remove publish property of this controller method and create tha publish object here and substitute the
+			// environment here
+			var result = await managementApi.PublishEntry("development", templateId, contentId, publish);
+			var response = new Response<Data>()
+			{
+				Message = result.GetProperty("notice").GetString(),
+				Data = new Data() { Uid = contentId }
+			};
+			return Results.Ok(response);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
 	private static async Task<IResult> GetAsset(string assetId, IContentstackApi contentStackApi)
 	{
 		try
@@ -186,9 +212,10 @@ public static partial class Api
 			var tags = form["tags"];
 			var folderId = form["folderId"];
 
-			using var ms = new MemoryStream();
-			file!.CopyTo(ms);
-			var byteArray = new ByteArrayPart(ms.ToArray(), file.FileName, file.ContentType);
+			using var memoryStream = new MemoryStream();
+			file!.CopyTo(memoryStream);
+			var byteArray = new ByteArrayPart(memoryStream.ToArray(), file.FileName, file.ContentType);
+
 			var result = await contentStackApi.CreateAsset(byteArray, folderId, title, description, tags);
 			return Results.Ok(result);
 		}
@@ -200,30 +227,61 @@ public static partial class Api
 		}		
 	}
 
-	private static string GetAssetFolder()
+	private static async Task<IResult> GetAssetRef(string assetId, IContentstackApi contentStackApi)
 	{
-		throw new NotImplementedException();
+		// blt105156a5b14511cf,blt10e1c4b9fe115494
+		try
+		{		
+			// TODO Environment string will come from env variable
+			var result = await contentStackApi.GetAssetRef(assetId);
+
+			return Results.Ok(result);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
 	}
 
-	private static string UploadAsset()
+	private static async Task<IResult> GetAssetFolder(string folderName, IContentstackApi contentStackApi)
 	{
-		throw new NotImplementedException();
+		// testFolder
+		try
+		{
+			var query = new FolderQuery
+			{
+				IsDir = true,
+				Name = folderName
+			};
+
+			// TODO Environment string will come from env variable
+			var result = await contentStackApi.GetAssetFolder(JsonSerializer.Serialize(query));
+			return Results.Ok(result);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
 	}
 
-	private static string GetAssetsRef()
-	{
-		throw new NotImplementedException();
-	}
-
-	private static async Task<IResult> PublishEntry(string templateId, string contentId, [FromBody] JsonElement publish, IContentstackApi managementApi)
+	private static async Task<IResult> PublishAsset(string assetId, IContentstackApi contentStackApi)
 	{
 		try
 		{
-			var result = await managementApi.PublishEntry("development", templateId, contentId, publish);
+			// TODO Environment string and locale will come from env variable.
+			var result = await contentStackApi.PublishAsset( assetId, JsonSerializer.SerializeToElement(new PublishAssetParam("development", "en")));
 			var response = new Response<Data>()
 			{
 				Message = result.GetProperty("notice").GetString(),
-				Data = new Data() { Uid = contentId }
+				Data = new Data() { Uid = assetId }
 			};
 			return Results.Ok(response);
 		}

@@ -24,5 +24,14 @@ namespace SbContentManager.ContentstackApi
         [Multipart]
         [Post("/assets")]
         Task<JsonElement> CreateAsset([AliasAs("asset[upload]")] ByteArrayPart file, [AliasAs("asset[parent_uid]")] string folderId, [AliasAs("asset[title]")] string title, [AliasAs("asset[description]")] string description, [AliasAs("asset[tags]")] string tags);
+
+        [Get("/assets/{assetId}/references")]
+        Task<JsonElement> GetAssetRef(string assetId);
+
+        [Get("/assets?include_folders=true&query={query}")]
+        Task<JsonElement> GetAssetFolder(string query);
+
+        [Post("/assets/{assetId}/publish")]
+        Task<JsonElement> PublishAsset(string assetId, [Body] JsonElement publish);
     }
 }
