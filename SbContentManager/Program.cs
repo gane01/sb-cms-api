@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
     {
-        c.OperationFilter<Foo>();
+        c.OperationFilter<CreateAssetOperationFilter>();
         c.SwaggerDoc("v1",
             new OpenApiInfo
             {

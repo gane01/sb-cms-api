@@ -3,7 +3,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SbContentManager.ContentstackApi
 {
-    public class Foo : IOperationFilter
+    public class CreateAssetOperationFilter : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
@@ -11,9 +11,6 @@ namespace SbContentManager.ContentstackApi
 
             if (context.ApiDescription.HttpMethod == HttpMethod.Post.ToString() && 
                 context.ApiDescription.RelativePath== "assets/") {
-
-                // -------------------------------
-
                     operation.Parameters.Clear();
                     var uploadFileMediaType = new OpenApiMediaType()
                     {
@@ -21,17 +18,32 @@ namespace SbContentManager.ContentstackApi
                         {
                             Type = "object",
                             Properties = {
-                                ["uploadedFile"] = new OpenApiSchema() {
-                                    Description = "Upload File",
+                                ["asset"] = new OpenApiSchema() {
+                                    Description = "Upload asset",
                                     Type = "file",
                                     Format = "binary" },
                                 ["title"] = new OpenApiSchema() {
-                                    Title = "This is the title",
-                                    Description = "This is the title",
+                                    Title = "Title",
+                                    Description = "Asset title",
+                                    Type = "string"
+                                },
+                                ["description"] = new OpenApiSchema() {
+                                    Title = "Description",
+                                    Description = "Asset desctiption",
+                                    Type = "string"
+                                },
+                                ["tags"] = new OpenApiSchema() {
+                                    Title = "Tags",
+                                    Description = "Asset tags sepadated by commas",
+                                    Type = "string"
+                                },
+                                ["folderId"] = new OpenApiSchema() {
+                                    Title = "Parent folder id",
+                                    Description = "The id of the parent folder of this asset",
                                     Type = "string"
                                 }
                             },
-                            Required = new HashSet<string>() { "uploadedFile" }
+                            Required = new HashSet<string>() { "asset" }
                         }
                     };
                     operation.RequestBody = new OpenApiRequestBody
@@ -41,8 +53,6 @@ namespace SbContentManager.ContentstackApi
                             ["multipart/form-data"] = uploadFileMediaType
                         }
                     };
-
-                // -------------------------------
             }
 
 

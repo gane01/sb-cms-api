@@ -168,7 +168,7 @@ public static partial class Api
 		}
 	}
 
-	private static async Task<IResult> CreateAsset(HttpRequest request)
+	private static async Task<IResult> CreateAsset(HttpRequest request, IContentstackApi contentStackApi)
 	{
 		// parent folder: blt2a46ed8f1b1d5979
 		try
@@ -180,18 +180,17 @@ public static partial class Api
 			}
 
 			var form = await request.ReadFormAsync();
-			var file = form.Files["uploadedFile"];
+			var file = form.Files["asset"];
 			var title = form["title"];
+			var description = form["description"];
+			var tags = form["tags"];
+			var folderId = form["folderId"];
 
-			/*
 			using var ms = new MemoryStream();
-			formFile.CopyTo(ms);
-			ByteArrayPart foo = new ByteArrayPart(ms.ToArray(), formFile.FileName);
-			var result = await contentStackApi.CreateAsset(foo, folderId, title, description, new string[] { "d" });
+			file!.CopyTo(ms);
+			var byteArray = new ByteArrayPart(ms.ToArray(), file.FileName, file.ContentType);
+			var result = await contentStackApi.CreateAsset(byteArray, folderId, title, description, tags);
 			return Results.Ok(result);
-			*/
-			await Task.Delay(1000);
-			return Results.Ok($"{file.FileName} - {title}");
 		}
 		catch (ApiException e) {
 			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);

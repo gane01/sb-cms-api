@@ -23,6 +23,6 @@ namespace SbContentManager.ContentstackApi
 
         [Multipart]
         [Post("/assets")]
-        Task<JsonElement> CreateAsset([AliasAs("asset[upload]")] ByteArrayPart file, [AliasAs("asset[parent_uid]")] string folderId, [AliasAs("asset[title]")] string title, [AliasAs("asset[description]")] string description, [AliasAs("asset[description]")] string[] tags);
+        Task<JsonElement> CreateAsset([AliasAs("asset[upload]")] ByteArrayPart file, [AliasAs("asset[parent_uid]")] string folderId, [AliasAs("asset[title]")] string title, [AliasAs("asset[description]")] string description, [AliasAs("asset[tags]")] string tags);
     }
 }
