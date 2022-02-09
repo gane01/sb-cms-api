@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
 
-namespace SbContentManager.ContentstackApi
+namespace SbContentManager.ContentstackClient
 {
     public class HttpHeaderHandler : DelegatingHandler
     {

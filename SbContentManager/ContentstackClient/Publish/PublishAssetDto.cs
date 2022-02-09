@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager.ContentstackApi.Publish
+namespace SbContentManager.ContentstackClient.Publish
 {
     public class PublishAssetDto
     {

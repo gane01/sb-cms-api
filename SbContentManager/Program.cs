@@ -1,6 +1,6 @@
 using Microsoft.OpenApi.Models;
 using Refit;
-using SbContentManager.ContentstackApi;
+using SbContentManager.ContentstackClient;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +22,7 @@ builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath);
     });
 
+builder.Services.AddTransient<ContentstackClient>();
 builder.Services.AddTransient<HttpHeaderHandler>();
 builder.Services.AddRefitClient<IContentstackApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(Config.ContentStackApiBaseUrl))

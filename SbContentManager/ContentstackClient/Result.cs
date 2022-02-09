@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager.Response
+namespace SbContentManager.ContentstackClient
 {
-    public class ResponseDto<T>
+    public class Result<T>
     {
         [JsonPropertyName("message")]
         public string? Message { get; set; }
@@ -11,7 +11,7 @@ namespace SbContentManager.Response
         public T? Data { get; set; }
     }
 
-    public class ResponseDetailsUidDto
+    public class UidResult
     {
         [JsonPropertyName("uid")]
         public string? Uid { get; set; }

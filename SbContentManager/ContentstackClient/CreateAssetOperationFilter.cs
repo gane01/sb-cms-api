@@ -1,7 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace SbContentManager.ContentstackApi
+namespace SbContentManager.ContentstackClient
 {
     public class CreateAssetOperationFilter : IOperationFilter
     {

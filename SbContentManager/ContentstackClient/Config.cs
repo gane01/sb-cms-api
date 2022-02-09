@@ -1,4 +1,4 @@
-﻿namespace SbContentManager.ContentstackApi
+﻿namespace SbContentManager.ContentstackClient
 {
     public class Config
     {
