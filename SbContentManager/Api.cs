@@ -1,8 +1,9 @@
 ﻿using SbContentManager.ContentstackApi;
 using System.Text.Json;
-using SbContentManager.Models;
 using Microsoft.AspNetCore.Mvc;
 using Refit;
+using SbContentManager.ContentstackApi.Publish;
+using SbContentManager.Response;
 
 public static partial class Api
 {
@@ -10,12 +11,14 @@ public static partial class Api
 	{
 		app.MapGet("/contents/{templateId}/{contentId}", GetEntry); // return one or multiple entries
 		app.MapGet("/contents/{templateId}", GetEntries);
-		app.MapPost("/contents/{templateId}", CreateEntry);		
+		app.MapPost("/contents/{templateId}", CreateEntry);
+		app.MapDelete("/contents/{templateId}/{contentId}", DeleteEntry);
 		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
 		app.MapPost("/contents/publish", PublishEntry);
 		app.MapGet("/assets/{assetId}", GetAsset);
 		app.MapGet("/assets/", GetAssets);
 		app.MapPost("/assets/", CreateAsset);
+		app.MapDelete("/assets/{assetId}", DeleteAsset);
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset); // Todo: make PublishEntry like this
@@ -85,10 +88,10 @@ public static partial class Api
 			// TODO Environment string will come from env variable
 			var result = await managementApi.CreateEntry("development", templateId, content);
 			var uid = result.GetProperty("entry").GetProperty("uid").GetString();
-			var response = new Response<Data>()
+			var response = new ResponseDto<ResponseDetailsUidDto>()
 			{
 				Message = result.GetProperty("notice").GetString(),
-				Data = new Data() { Uid = uid }
+				Data = new ResponseDetailsUidDto() { Uid = uid }
 			};
 			// TODO add full url here
 			return Results.Created($"/contents/{templateId}/{uid}", response);
@@ -98,15 +101,39 @@ public static partial class Api
 		}	
     }
 
+	private static async Task<IResult> DeleteEntry(string templateId, string contentId, IContentstackApi managementApi)
+	{
+		try
+		{
+			var result = await managementApi.DeleteEntry(templateId, contentId);
+			// TODO create a response dto that is just a message? eg ResponseMessageDto?
+			var response = new ResponseDto<string>()
+			{
+				Message = result.GetProperty("notice").GetString(),
+				Data = string.Empty
+			};
+
+			return Results.Ok(response);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
 	private static async Task<IResult> UpdateEntry(string templateId, string contentId, [FromBody] JsonElement content, IContentstackApi managementApi)
 	{
 		try
 		{
 			var result = await managementApi.UpdateEntry(templateId, contentId, content);
-			var response = new Response<Data>()
+			var response = new ResponseDto<ResponseDetailsUidDto>()
 			{
 				Message = result.GetProperty("notice").GetString(),
-				Data = new Data() { Uid = result.GetProperty("entry").GetProperty("uid").GetString() }
+				Data = new ResponseDetailsUidDto() { Uid = result.GetProperty("entry").GetProperty("uid").GetString() }
 			};
 			return Results.Ok(response);
 		}
@@ -119,17 +146,16 @@ public static partial class Api
 		}
 	}
 
-	private static async Task<IResult> PublishEntry(string templateId, string contentId, [FromBody] JsonElement publish, IContentstackApi managementApi)
+	private static async Task<IResult> PublishEntry(string templateId, string contentId, IContentstackApi managementApi)
 	{
 		try
 		{
-			// Todo: remove publish property of this controller method and create tha publish object here and substitute the
-			// environment here
-			var result = await managementApi.PublishEntry("development", templateId, contentId, publish);
-			var response = new Response<Data>()
+			// TODO Environment string and locale will come from env variable.
+			var result = await managementApi.PublishEntry(templateId, contentId, JsonSerializer.SerializeToElement(new PublishAssetDto("development", "en")));
+			var response = new ResponseDto<ResponseDetailsUidDto>()
 			{
 				Message = result.GetProperty("notice").GetString(),
-				Data = new Data() { Uid = contentId }
+				Data = new ResponseDetailsUidDto() { Uid = contentId }
 			};
 			return Results.Ok(response);
 		}
@@ -227,6 +253,24 @@ public static partial class Api
 		}		
 	}
 
+	private static async Task<IResult> DeleteAsset(string assetId, IContentstackApi contentStackApi)
+	{
+		try
+		{
+			var result = await contentStackApi.DeleteAsset(assetId);
+			// TODO use our on responsedeto to return the response message
+			return Results.Ok(result);
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
 	private static async Task<IResult> GetAssetRef(string assetId, IContentstackApi contentStackApi)
 	{
 		// blt105156a5b14511cf,blt10e1c4b9fe115494
@@ -277,11 +321,11 @@ public static partial class Api
 		try
 		{
 			// TODO Environment string and locale will come from env variable.
-			var result = await contentStackApi.PublishAsset( assetId, JsonSerializer.SerializeToElement(new PublishAssetParam("development", "en")));
-			var response = new Response<Data>()
+			var result = await contentStackApi.PublishAsset(assetId, JsonSerializer.SerializeToElement(new PublishAssetDto("development", "en")));
+			var response = new ResponseDto<ResponseDetailsUidDto>()
 			{
 				Message = result.GetProperty("notice").GetString(),
-				Data = new Data() { Uid = assetId }
+				Data = new ResponseDetailsUidDto() { Uid = assetId }
 			};
 			return Results.Ok(response);
 		}
