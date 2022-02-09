@@ -21,7 +21,7 @@ public static partial class Api
 		app.MapDelete("/assets/{assetId}", DeleteAsset);
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
-		app.MapPost("/assets/publish/{assetId}", PublishAsset); // Todo: make PublishEntry like this
+		app.MapPost("/assets/publish/{assetId}", PublishAsset);
 		// Todo: add asset/entry bulk publish,
 		// Todo: add asset/entry bulk copy,
 	}
@@ -321,6 +321,7 @@ public static partial class Api
 		try
 		{
 			// TODO Environment string and locale will come from env variable.
+			// TODO so we really need to serialize here to json element? try to pass the native object and see if refit can serialize it
 			var result = await contentStackApi.PublishAsset(assetId, JsonSerializer.SerializeToElement(new PublishAssetDto("development", "en")));
 			var response = new ResponseDto<ResponseDetailsUidDto>()
 			{
