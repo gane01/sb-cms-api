@@ -46,26 +46,24 @@ public class Replicator
 
 	private async Task<IEnumerable<string>> CopyAssets(IEnumerable<AssetModel> assets, string folderId)
 	{
-		var tasks = new List<Task<Task<string>>>();
+		var tasks = new List<Task<string>>();
 		foreach (var asset in assets) {
-			// bltd597a35241e12bff
-			var task = new Task<Task<string>>(async () => {
-				return await Foo(folderId, asset);
-			});
-
-			tasks.Add(task);
-			task.Start();
+			tasks.Add(Foo(folderId, asset));
 		}
-
-		await Task.WhenAll(tasks.ToArray());		
-		return tasks.Select(task => task.Result.Result);
+		await Task.WhenAll(tasks.ToArray());
+		return tasks.Select(task => task.Result);
 	}
 
 	private async Task<string> Foo(string folderId, AssetModel asset) {
-		using var downloadFileStream = (httpClient.GetAsync(asset.Url)).Result.Content.ReadAsStream();
+		using var downloadFileStream = (await httpClient.GetAsync(asset.Url)).Content.ReadAsStream();
 		using var uploadFileStream = new MemoryStream();
 		downloadFileStream.CopyTo(uploadFileStream);
 		var result = await this.contentstackClient.CreateAsset(uploadFileStream, folderId, asset.FileName, asset.ContentType, asset.Title, asset.Description, string.Join(",", asset.Tags));
 		return result.GetProperty("asset").GetProperty("uid").GetString();
 	}
+
+	// folderId: bltd597a35241e12bff
+	// assets:
+	// blt965b14e0ab5190a7
+	// blt90a946c525f6c91e
 }
