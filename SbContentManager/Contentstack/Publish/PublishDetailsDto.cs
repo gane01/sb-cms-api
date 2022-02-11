@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager.ContentstackClient.Publish
+namespace SbContentManager.Contentstack.Publish
 {
     public class PublishDetailsDto
     {

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager.ContentstackClient
+namespace SbContentManager.Contentstack
 {
     public class OrQuery<T>
     {

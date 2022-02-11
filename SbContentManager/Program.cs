@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Refit;
-using SbContentManager.ContentstackClient;
+using SbContentManager.Contentstack;
+using SbContentManager.Swagger;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,8 @@ builder.Services.AddSwaggerGen(c =>
         c.IncludeXmlComments(xmlPath);
     });
 
+builder.Services.AddSingleton<HttpClient>();
+builder.Services.AddTransient<Replicator>();
 builder.Services.AddTransient<ContentstackClient>();
 builder.Services.AddTransient<HttpHeaderHandler>();
 builder.Services.AddRefitClient<IContentstackApi>()

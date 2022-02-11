@@ -1,8 +1,8 @@
-﻿using SbContentManager.ContentstackClient;
+﻿using SbContentManager.Contentstack;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Refit;
-using SbContentManager.ContentstackClient.Publish;
+using SbContentManager;
 
 public static partial class Api
 {
@@ -21,8 +21,7 @@ public static partial class Api
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset);
-		// Todo: add asset/entry bulk publish,
-		// Todo: add asset/entry bulk copy,
+		app.MapPost("/assets/copy", CopyAsset);
 	}
 
 	private static async Task<IResult> GetEntry(string templateId, string contentId, ContentstackClient contentstackClient)
@@ -159,8 +158,14 @@ public static partial class Api
 		try
 		{
 			if (!request.HasFormContentType) { return Results.BadRequest(); }
-			var formCollection = await request.ReadFormAsync();
-			return Results.Ok(await contentstackClient.CreateAsset(formCollection));
+			var form = await request.ReadFormAsync();
+			var file = form.Files["asset"];
+
+			using var fileStream = new MemoryStream();
+			file!.CopyTo(fileStream);
+
+			return Results.Ok(await contentstackClient.CreateAsset(
+				fileStream, form["folderId"], file.FileName, file.ContentType, form["title"], form["description"], form["tags"]));
 		}
 		catch (ApiException e) {
 			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
@@ -233,5 +238,10 @@ public static partial class Api
 		{
 			return Results.Problem(e.Message);
 		}
+	}
+
+	private static async Task<IResult> CopyAsset([FromBody] AssetCopyRequestDto assetCopy, Replicator replicator) {
+		var result = await replicator.CopyAsset(assetCopy.AssetIds, assetCopy.FolderId);
+		return Results.Ok("ffr");
 	}
 }

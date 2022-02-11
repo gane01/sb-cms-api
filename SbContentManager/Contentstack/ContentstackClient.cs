@@ -1,8 +1,8 @@
 ﻿using Refit;
-using SbContentManager.ContentstackClient.Publish;
+using SbContentManager.Contentstack.Publish;
 using System.Text.Json;
 
-namespace SbContentManager.ContentstackClient
+namespace SbContentManager.Contentstack
 {
     public class ContentstackClient
     {
@@ -111,14 +111,9 @@ namespace SbContentManager.ContentstackClient
 			return await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
 		}
 
-		public async Task<JsonElement> CreateAsset(IFormCollection form) {
-			var asset = form.Files["asset"];
-
-			using var assetStream = new MemoryStream();
-			asset!.CopyTo(assetStream);
-			var assetByteArray = new ByteArrayPart(assetStream.ToArray(), asset.FileName, asset.ContentType);
-
-			return await contentStackApi.CreateAsset(assetByteArray, form["folderId"], form["title"], form["description"], form["tags"]);
+		public async Task<JsonElement> CreateAsset(MemoryStream file, string folderId, string fileName, string contentType, string title, string description, string tags) {
+			var assetByteArray = new ByteArrayPart(file.ToArray(), fileName, contentType);
+			return await contentStackApi.CreateAsset(assetByteArray, folderId, title, description, tags);
 		}
 
 		public async Task<Result<string>> DeleteAsset(string assetId)

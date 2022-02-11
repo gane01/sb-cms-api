@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace SbContentManager.ContentstackClient
+namespace SbContentManager.Contentstack
 {
     public interface IContentstackApi
     {

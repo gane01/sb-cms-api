@@ -1,14 +1,16 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager.ContentstackClient.Publish
+namespace SbContentManager.Contentstack.Publish
 {
-    public class PublishAssetDto
+    public class PublishEntryDto
     {
-        [JsonPropertyName("asset")]
+        [JsonPropertyName("entry")]
         public PublishDetailsDto? Details { get; set; }
 
-        public PublishAssetDto(string environment, string locale) {
-            Details = new PublishDetailsDto() {
+        public PublishEntryDto(string environment, string locale)
+        {
+            Details = new PublishDetailsDto()
+            {
                 Locales = new string[] { locale },
                 Environments = new string[] { environment }
             };
