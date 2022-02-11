@@ -242,6 +242,6 @@ public static partial class Api
 
 	private static async Task<IResult> CopyAsset([FromBody] AssetCopyRequestDto assetCopy, Replicator replicator) {
 		var result = await replicator.CopyAsset(assetCopy.AssetIds, assetCopy.FolderId);
-		return Results.Ok("ffr");
+		return Results.Ok(result);
 	}
 }

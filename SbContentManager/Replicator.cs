@@ -1,5 +1,6 @@
 ﻿using SbContentManager;
 using SbContentManager.Contentstack;
+using System.Text.Json;
 
 public class Replicator
 {
@@ -13,8 +14,8 @@ public class Replicator
 
 	public async Task<string[]> CopyAsset(string[] assetIds, string folderId) {
 		var assets = await GetAssets(assetIds);
-		Copy(assets, folderId);
-		return new string[] { "fff" };
+		var result = await CopyAssets(assets, folderId);
+		return result.ToArray();
     }
 
 	private async Task<IEnumerable<AssetModel>> GetAssets(string[] assetIds) {
@@ -43,30 +44,28 @@ public class Replicator
 		});
 	}
 
-	private void Copy(IEnumerable<AssetModel> assets, string folderId)
+	private async Task<IEnumerable<string>> CopyAssets(IEnumerable<AssetModel> assets, string folderId)
 	{
-		List<Task> tasks = new();
+		var tasks = new List<Task<Task<string>>>();
 		foreach (var asset in assets) {
 			// bltd597a35241e12bff
-			var task = new Task(async () => {
-				using var downloadFileStream = (httpClient.GetAsync(asset.Url)).Result.Content.ReadAsStream();
-				using var uploadFileStream = new MemoryStream();
-				downloadFileStream.CopyTo(uploadFileStream);
-
-				await this.contentstackClient.CreateAsset(
-					uploadFileStream, folderId, asset.FileName, asset.ContentType, asset.Title, asset.Description, string.Join(",", asset.Tags));
+			var task = new Task<Task<string>>(async () => {
+				return await Foo(folderId, asset);
 			});
 
 			tasks.Add(task);
 			task.Start();
 		}
-		try
-		{
-			Task.WhenAll(tasks.ToArray());
-			return;
-		}
-		catch (Exception) {
-			throw;
-		}
+
+		await Task.WhenAll(tasks.ToArray());		
+		return tasks.Select(task => task.Result.Result);
+	}
+
+	private async Task<string> Foo(string folderId, AssetModel asset) {
+		using var downloadFileStream = (httpClient.GetAsync(asset.Url)).Result.Content.ReadAsStream();
+		using var uploadFileStream = new MemoryStream();
+		downloadFileStream.CopyTo(uploadFileStream);
+		var result = await this.contentstackClient.CreateAsset(uploadFileStream, folderId, asset.FileName, asset.ContentType, asset.Title, asset.Description, string.Join(",", asset.Tags));
+		return result.GetProperty("asset").GetProperty("uid").GetString();
 	}
 }
