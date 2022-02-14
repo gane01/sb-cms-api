@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 
 builder.Services.AddSingleton<HttpClient>();
-builder.Services.AddTransient<Replicator>();
+builder.Services.AddTransient<AssetReplicator>();
 builder.Services.AddTransient<ContentstackClient>();
 builder.Services.AddTransient<HttpHeaderHandler>();
 builder.Services.AddRefitClient<IContentstackApi>()

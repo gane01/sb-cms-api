@@ -21,7 +21,8 @@ public static partial class Api
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset);
-		app.MapPost("/assets/copy", CopyAsset);
+		app.MapPost("/assets/copy", CopyAssets);
+		//app.MapPost("/contents/copy", CopyEntries);
 	}
 
 	private static async Task<IResult> GetEntry(string templateId, string contentId, ContentstackClient contentstackClient)
@@ -240,8 +241,13 @@ public static partial class Api
 		}
 	}
 
-	private static async Task<IResult> CopyAsset([FromBody] AssetCopyRequestDto assetCopy, Replicator replicator) {
-		var result = await replicator.CopyAsset(assetCopy.AssetIds, assetCopy.FolderId);
+	private static async Task<IResult> CopyAssets([FromBody] AssetCopyRequestDto assetCopyRequest, AssetReplicator assetReplicator) {
+		var result = await assetReplicator.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
 		return Results.Ok(result);
 	}
+	/*
+	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryReplicator entryReplicator) {
+		var result = await entryReplicator.Copy(entryCopyRequest.AssetIds, entryCopyRequest.FolderId);
+		return Results.Ok(result);
+	}*/
 }
