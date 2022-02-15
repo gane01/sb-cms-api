@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SbContentManager
+namespace SbContentManager.Asset
 {
     public class AssetCopyRequestDto
     {

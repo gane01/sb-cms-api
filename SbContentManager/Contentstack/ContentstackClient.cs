@@ -24,16 +24,13 @@ namespace SbContentManager.Contentstack
 			return await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));
 		}
 
-		public async Task<JsonElement> GetEntries(string templateId, string contenIds)
+		public async Task<JsonElement> GetEntries(string templateId, IEnumerable<string> contenIds)
 		{
-			var query = new OrQuery<UidQuery>
-			{
-				Values = new List<UidQuery>()
-			};
+			var query = new OrQuery<UidQuery> { Values = new List<UidQuery>() };
 
-			contenIds.Split(",").ToList().ForEach(contenId =>
-				query.Values.Add(new UidQuery() { Uid = contenId })
-			);
+			foreach (var contenId in contenIds) {
+				query.Values.Add(new UidQuery() { Uid = contenId });
+			}
 
 			// TODO Environment string will come from env variable
 			return await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));

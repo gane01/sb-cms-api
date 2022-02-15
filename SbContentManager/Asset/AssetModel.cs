@@ -1,4 +1,4 @@
-﻿namespace SbContentManager
+﻿namespace SbContentManager.Asset
 {
     public class AssetModel
     {

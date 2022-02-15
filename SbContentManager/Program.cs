@@ -1,8 +1,10 @@
 using Microsoft.OpenApi.Models;
 using Refit;
 using SbContentManager.Contentstack;
+using SbContentManager.Asset;
 using SbContentManager.Swagger;
 using System.Reflection;
+using SbContentManager.Entry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 
 builder.Services.AddSingleton<HttpClient>();
-builder.Services.AddTransient<AssetReplicator>();
+builder.Services.AddTransient<AssetEffect>();
+builder.Services.AddTransient<EntryEffect>();
 builder.Services.AddTransient<ContentstackClient>();
 builder.Services.AddTransient<HttpHeaderHandler>();
 builder.Services.AddRefitClient<IContentstackApi>()

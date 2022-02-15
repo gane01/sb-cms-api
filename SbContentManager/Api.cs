@@ -2,7 +2,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Refit;
-using SbContentManager;
+using SbContentManager.Asset;
+using SbContentManager.Entry;
 
 public static partial class Api
 {
@@ -22,7 +23,7 @@ public static partial class Api
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset);
 		app.MapPost("/assets/copy", CopyAssets);
-		//app.MapPost("/contents/copy", CopyEntries);
+		app.MapPost("/contents/copy", CopyEntries);
 	}
 
 	private static async Task<IResult> GetEntry(string templateId, string contentId, ContentstackClient contentstackClient)
@@ -44,7 +45,7 @@ public static partial class Api
     {
 		try
 		{
-			return Results.Ok(await contentstackClient.GetEntries(templateId, contenIds));
+			return Results.Ok(await contentstackClient.GetEntries(templateId, contenIds.Split(",")));
 		}
 		catch (ApiException e)
 		{
@@ -241,13 +242,24 @@ public static partial class Api
 		}
 	}
 
-	private static async Task<IResult> CopyAssets([FromBody] AssetCopyRequestDto assetCopyRequest, AssetReplicator assetReplicator) {
-		var result = await assetReplicator.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
+	// TODO this is a temp api just to test asset copy feature
+	private static async Task<IResult> CopyAssets([FromBody] AssetCopyRequestDto assetCopyRequest, AssetEffect assetEffect) {
+		var result = await assetEffect.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
 		return Results.Ok(result);
 	}
-	/*
-	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryReplicator entryReplicator) {
-		var result = await entryReplicator.Copy(entryCopyRequest.AssetIds, entryCopyRequest.FolderId);
-		return Results.Ok(result);
-	}*/
+
+	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect) {
+		try
+		{
+			var result = await entryEffect.Copy(entryCopyRequest.TemplateId, entryCopyRequest.ContentIds, entryCopyRequest.FolderId, entryCopyRequest.LanguageCodes);
+			return Results.Ok(result);
+		}
+		catch (ApiException e) {
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
 }
