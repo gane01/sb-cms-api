@@ -10,6 +10,7 @@ namespace SbContentManager.Entry
         public IEnumerable<string> ContentIds { get; set; }
         [JsonPropertyName("folderId")]
         public string FolderId { get; set; }
+        // https://www.andiamo.co.uk/resources/iso-language-codes/
         [JsonPropertyName("languageCodes")]
         public IEnumerable<string> LanguageCodes { get; set; }
     }

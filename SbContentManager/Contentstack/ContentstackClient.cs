@@ -1,6 +1,7 @@
 ﻿using Refit;
 using SbContentManager.Contentstack.Publish;
 using System.Text.Json;
+using System.Linq;
 
 namespace SbContentManager.Contentstack
 {
@@ -27,13 +28,11 @@ namespace SbContentManager.Contentstack
 		public async Task<JsonElement> GetEntries(string templateId, IEnumerable<string> contenIds)
 		{
 			var query = new OrQuery<UidQuery> { Values = new List<UidQuery>() };
+            query.Values.AddRange(from contenId in contenIds
+                                  select new UidQuery() { Uid = contenId });
 
-			foreach (var contenId in contenIds) {
-				query.Values.Add(new UidQuery() { Uid = contenId });
-			}
-
-			// TODO Environment string will come from env variable
-			return await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));
+            // TODO Environment string will come from env variable
+            return await contentStackApi.GetEntries("development", templateId, JsonSerializer.Serialize(query));
 		}
 
 		public async Task<Result<UidResult>> CreateEntry(string templateId, JsonElement content)
@@ -92,7 +91,7 @@ namespace SbContentManager.Contentstack
 			return await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
 		}
 
-		public async Task<JsonElement> GetAssets(string assetIds)
+		public async Task<JsonElement> GetAssets(IEnumerable<string> assetIds)
 		{
 			// blt105156a5b14511cf,blt10e1c4b9fe115494
 			var query = new OrQuery<AssetQuery>
@@ -100,12 +99,11 @@ namespace SbContentManager.Contentstack
 				Values = new List<AssetQuery>()
 			};
 
-			assetIds.Split(",").ToList().ForEach(assetId =>
-				query.Values.Add(new AssetQuery() { Uid = assetId, Locale = "en" })
-			);
+            query.Values.AddRange(from assetId in assetIds
+                                  select new AssetQuery() { Uid = assetId, Locale = "en" });
 
-			// TODO Environment string will come from env variable
-			return await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
+            // TODO Environment string will come from env variable
+            return await contentStackApi.GetAssets("development", JsonSerializer.Serialize(query));
 		}
 
 		public async Task<JsonElement> CreateAsset(MemoryStream file, string folderId, string fileName, string contentType, string title, string description, string tags) {

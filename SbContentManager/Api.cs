@@ -142,7 +142,7 @@ public static partial class Api
 		// blt105156a5b14511cf,blt10e1c4b9fe115494
 		try
 		{
-			return Results.Ok(await contentstackClient.GetAssets(assetIds));
+			return Results.Ok(await contentstackClient.GetAssets(assetIds.Split(",")));
 		}
 		catch (ApiException e)
 		{
@@ -249,6 +249,14 @@ public static partial class Api
 	}
 
 	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect) {
+
+		//{
+		//	"templateId": "sbsm_entity_test",
+		//	"contentIds": ["blt2915fd861a6c73b6"],
+		//	"folderId": "bltb8b7ccd16469ebca",
+		//	"languageCodes": ["en-us", "it"]
+		//}
+
 		try
 		{
 			var result = await entryEffect.Copy(entryCopyRequest.TemplateId, entryCopyRequest.ContentIds, entryCopyRequest.FolderId, entryCopyRequest.LanguageCodes);
