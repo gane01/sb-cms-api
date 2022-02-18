@@ -21,16 +21,13 @@ namespace SbContentManager.Entry
 			var entries = await contentstackClient.GetEntries(contentType, entryIds);
 			var sbsmEntities = JsonSerializer.Deserialize<SbsmEntities<JsonElement>>(entries);
 			return await CopyEntries(contentType, sbsmEntities.Entries, languageCodes, folderId);
+			// https://www.contentstack.com/docs/developers/apis/content-management-api/#publish-an-entry-with-references
 		}
 
 		private async Task<IEnumerable<SbsmEntity<string>>> CopyEntries(string contentType, IEnumerable<Entry<JsonElement>> entries, IEnumerable<string> languageCodes, string folderId)
 		{
-			var tasks = new List<Task<SbsmEntity<string>>>();
-			foreach (var entry in entries)
-			{
-				tasks.Add(CopyEntry(contentType, entry, languageCodes, folderId));
-			}
-			await Task.WhenAll(tasks.ToArray());
+			var tasks = entries.Select(entry => CopyEntry(contentType, entry, languageCodes, folderId)).ToList();
+			await Task.WhenAll(tasks);
 			return tasks.Select(task => task.Result);
 		}
 
@@ -39,7 +36,7 @@ namespace SbContentManager.Entry
 			{
 				Entry = new Entry<string>
 				{
-					Title = $"{entry.Title} - 3",
+					Title = new Guid().ToString(),
 					Tags = entry.Tags,
 					Locales = await CopyLocales(languageCodes, entry.Locales, folderId)
 				}
@@ -52,28 +49,27 @@ namespace SbContentManager.Entry
 
 		private async Task<IEnumerable<Locale<string>>> CopyLocales(IEnumerable<string> languageCodes, IEnumerable<Locale<JsonElement>> locales, string folderId)
 		{
-			var newLocales = locales.Where(locale => !languageCodes.Contains(locale.LanguageCode));
-			var result = new List<Locale<string>>();
-			foreach (var newLocale in newLocales) {
-				result.Add(new Locale<string>() {
-					LanguageCode = newLocale.LanguageCode,
-					Links = newLocale.Links,
-					Richtexts = newLocale.Richtexts,
-					Texts = newLocale.Texts,
-					Images = await CopyImages(newLocale.Images, folderId)
-				});
-			}
-			return result;
+			var filteredLocales = locales.Where(locale => !languageCodes.Contains(locale.LanguageCode));
+			var tasks = filteredLocales.Select(locale => CopyLocale(locale, folderId)).ToList();
+			await Task.WhenAll(tasks);
+			return tasks.Select(task => task.Result);
+		}
+
+		private async Task<Locale<string>> CopyLocale(Locale<JsonElement> locale, string folderId) {
+			return new Locale<string>()
+			{
+				LanguageCode = locale.LanguageCode,
+				Links = locale.Links,
+				Richtexts = locale.Richtexts,
+				Texts = locale.Texts,
+				Images = await CopyImages(locale.Images, folderId)
+			};
 		}
 
 		private async Task<IEnumerable<ImageField<string>>> CopyImages(IEnumerable<ImageField<JsonElement>> images, string folderId)
 		{
-			var tasks = new List<Task<ImageField<string>>>();
-			foreach (var image in images)
-			{
-				tasks.Add(CopyImage(image, folderId));
-			}
-			await Task.WhenAll(tasks.ToArray());
+			var tasks = images.Select(image => CopyImage(image, folderId)).ToList();
+			await Task.WhenAll(tasks);
 			return tasks.Select(task => task.Result);
 		}
 

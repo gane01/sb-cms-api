@@ -19,7 +19,6 @@ namespace SbContentManager.Asset
 			using var uploadFileStream = new MemoryStream();
 			downloadFileStream.CopyTo(uploadFileStream);
 			var result = await this.contentstackClient.CreateAsset(uploadFileStream, folderId, asset.FileName, asset.ContentType, asset.Title, asset.Description, string.Join(",", asset.Tags));
-			// Return the id of the original asset and its newly duplicated asset id.
 			return result.GetProperty("asset").GetProperty("uid").GetString();
 		}
 
