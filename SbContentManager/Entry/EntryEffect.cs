@@ -32,15 +32,6 @@ namespace SbContentManager.Entry
 			}
 			await Task.WhenAll(tasks.ToArray());
 			return tasks.Select(task => task.Result);
-
-			/*
-			var result = new List<SbsmEntity<string>>();
-			foreach (var entry in entries)
-			{
-				result.Add(await CopyEntry(contentType, entry, languageCodes, folderId));
-			}
-			return result;
-			*/
 		}
 
 		private async Task<SbsmEntity<string>> CopyEntry(string contentType, Entry<JsonElement> entry, IEnumerable<string> languageCodes, string folderId) {
@@ -77,27 +68,28 @@ namespace SbContentManager.Entry
 
 		private async Task<IEnumerable<ImageField<string>>> CopyImages(IEnumerable<ImageField<JsonElement>> images, string folderId)
 		{
-			var result = new List<ImageField<string>>();
+			var tasks = new List<Task<ImageField<string>>>();
 			foreach (var image in images)
 			{
-				var asset = new AssetModel
-				{
-					Id = image.Image.GetProperty("uid").GetString(),
-					Title = image.Image.GetProperty("title").GetString(),
-					Description = image.Image.TryGetProperty("description", out JsonElement descriptionElement) ? descriptionElement.GetString() : string.Empty,
-					FileName = image.Image.GetProperty("filename").GetString(),
-					ContentType = image.Image.GetProperty("content_type").GetString(),
-					Url = image.Image.GetProperty("url").GetString(),
-					Tags = image.Image.GetProperty("tags").EnumerateArray().Select((tag) => tag.GetString()).ToArray()
-				};
-
-				result.Add(new ImageField<string>
-				{
-					Key = image.Key,
-					Image = await assetEffect.Copy(asset, folderId)
-			});
+				tasks.Add(CopyImage(image, folderId));
 			}
-			return result;
+			await Task.WhenAll(tasks.ToArray());
+			return tasks.Select(task => task.Result);
+		}
+
+		private async Task<ImageField<string>> CopyImage(ImageField<JsonElement> image, string folderId) {
+			var asset = new AssetModel
+			{
+				Id = image.Image.GetProperty("uid").GetString(),
+				Title = image.Image.GetProperty("title").GetString(),
+				Description = image.Image.TryGetProperty("description", out JsonElement descriptionElement) ? descriptionElement.GetString() : string.Empty,
+				FileName = image.Image.GetProperty("filename").GetString(),
+				ContentType = image.Image.GetProperty("content_type").GetString(),
+				Url = image.Image.GetProperty("url").GetString(),
+				Tags = image.Image.GetProperty("tags").EnumerateArray().Select((tag) => tag.GetString()).ToArray()
+			};
+
+			return new ImageField<string> { Key = image.Key, Image = await assetEffect.Copy(asset, folderId) };
 		}
 	}
 }

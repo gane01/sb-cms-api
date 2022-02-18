@@ -22,7 +22,6 @@ public static partial class Api
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset);
-		app.MapPost("/assets/copy", CopyAssets);
 		app.MapPost("/contents/copy", CopyEntries);
 	}
 
@@ -240,12 +239,6 @@ public static partial class Api
 		{
 			return Results.Problem(e.Message);
 		}
-	}
-
-	// TODO this is a temp api just to test asset copy feature
-	private static async Task<IResult> CopyAssets([FromBody] AssetCopyRequestDto assetCopyRequest, AssetEffect assetEffect) {
-		//var result = await assetEffect.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
-		return Results.Ok();
 	}
 
 	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect) {
