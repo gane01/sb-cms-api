@@ -2,6 +2,12 @@
 
 namespace SbContentManager.Contentstack
 {
+    public class ResultMessage
+    {
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
+    }
+
     public class Result<T>
     {
         [JsonPropertyName("message")]

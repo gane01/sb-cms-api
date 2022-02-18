@@ -78,6 +78,32 @@ namespace SbContentManager.Contentstack
 			};
 		}
 
+		public async Task<ResultMessage> BulkPublishEntries(string templateId, IEnumerable<string> contentIds)
+		{
+            // TODO Environment string and locale will come from env variable.
+            var entries = contentIds.Select(contentId => new SbContentManager.Contentstack.Publish.Entry
+			{
+				Uid = contentId,
+				ContentType = templateId,
+				Version = 1
+            });
+
+			var publishEntryWirhRef = new PublishEntryWirhRefDto
+			{
+				Entries = entries,
+				Environments = new[] { "development" },
+				Locales = new[] { "en" },
+				PublishWithReference = true,
+				SkipWorkflowStageCheck = true
+			};
+
+			var result = await contentStackApi.BulkPublishEntries(JsonSerializer.SerializeToElement(publishEntryWirhRef));
+			return new ResultMessage()
+			{
+				Message = result.GetProperty("notice").GetString(),
+			};
+		}
+
 		public async Task<JsonElement> GetAsset(string assetId)
 		{
 			var query = new OrQuery<AssetQuery>
@@ -128,7 +154,6 @@ namespace SbContentManager.Contentstack
 
 		public async Task<JsonElement> GetAssetFolder(string folderName)
 		{
-			// testFolder
 			var query = new FolderQuery
 			{
 				IsDir = true,

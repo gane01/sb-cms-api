@@ -21,6 +21,9 @@ namespace SbContentManager.Contentstack
         [Post("/content_types/{contentType}/entries/{entryId}/publish")]
         Task<JsonElement> PublishEntry(string contentType, string entryId, [Body] JsonElement publish);
 
+        [Post("/bulk/publish?x-bulk-action=publish&approvals=true&skip_workflow_stage_check=true")]
+        Task<JsonElement> BulkPublishEntries([Body] JsonElement publish);
+
         [Get("/assets?environment={environment}&query={query}")]
         Task<JsonElement> GetAssets(string environment, string query);
 

@@ -20,8 +20,9 @@ namespace SbContentManager.Entry
 		public async Task<IEnumerable<SbsmEntity<string>>> Copy(string contentType, IEnumerable<string> entryIds, string folderId, IEnumerable<string> languageCodes) {
 			var entries = await contentstackClient.GetEntries(contentType, entryIds);
 			var sbsmEntities = JsonSerializer.Deserialize<SbsmEntities<JsonElement>>(entries);
-			return await CopyEntries(contentType, sbsmEntities.Entries, languageCodes, folderId);
-			// https://www.contentstack.com/docs/developers/apis/content-management-api/#publish-an-entry-with-references
+			var copiedEntries = await CopyEntries(contentType, sbsmEntities.Entries, languageCodes, folderId);
+			await contentstackClient.BulkPublishEntries(contentType, copiedEntries.Select(x=>x.Entry.Id));
+			return copiedEntries;
 		}
 
 		private async Task<IEnumerable<SbsmEntity<string>>> CopyEntries(string contentType, IEnumerable<Entry<JsonElement>> entries, IEnumerable<string> languageCodes, string folderId)
@@ -36,7 +37,7 @@ namespace SbContentManager.Entry
 			{
 				Entry = new Entry<string>
 				{
-					Title = new Guid().ToString(),
+					Title = Guid.NewGuid().ToString(),
 					Tags = entry.Tags,
 					Locales = await CopyLocales(languageCodes, entry.Locales, folderId)
 				}

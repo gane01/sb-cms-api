@@ -15,6 +15,7 @@ public static partial class Api
 		app.MapDelete("/contents/{templateId}/{contentId}", DeleteEntry);
 		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
 		app.MapPost("/contents/publish", PublishEntry);
+		app.MapPost("/contents/publish/bulk/{templateId}/bulk", BulkPublishEntries);
 		app.MapGet("/assets/{assetId}", GetAsset);
 		app.MapGet("/assets/", GetAssets);
 		app.MapPost("/assets/", CreateAsset);
@@ -109,6 +110,22 @@ public static partial class Api
 		{
 			// TODO Environment string and locale will come from env variable.
 			return Results.Ok(await contentstackClient.PublishEntry(templateId, contentId));
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
+	private static async Task<IResult> BulkPublishEntries(string templateId, string[] contentIds, ContentstackClient contentstackClient) {
+		try
+		{
+			// TODO Environment string and locale will come from env variable.
+			return Results.Ok(await contentstackClient.BulkPublishEntries(templateId, contentIds));
 		}
 		catch (ApiException e)
 		{
