@@ -1,62 +1,72 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SbContentManager.Entry
 {
-    public partial class Welcome
+    public class SbsmEntity<T>
     {
         [JsonPropertyName("entry")]
-        public Entry Entry { get; set; }
+        public Entry<T> Entry { get; set; }
     }
 
-    public partial class Entry
+    public class SbsmEntities<T>
     {
+        [JsonPropertyName("entries")]
+        public IEnumerable<Entry<T>> Entries { get; set; }
+    }
+
+    public class Entry<T>
+    {
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+
         [JsonPropertyName("title")]
         public string Title { get; set; }
 
         [JsonPropertyName("locales")]
-        public List<Locale> Locales { get; set; }
+        public IEnumerable<Locale<T>> Locales { get; set; }
 
         [JsonPropertyName("tags")]
-        public List<string> Tags { get; set; }
+        public IEnumerable<string> Tags { get; set; }
     }
 
-    public partial class Locale
+    public class Locale<T>
     {
         [JsonPropertyName("language_code")]
         public string LanguageCode { get; set; }
 
         [JsonPropertyName("texts")]
-        public List<Text> Texts { get; set; }
+        public IEnumerable<TextField> Texts { get; set; }
 
         [JsonPropertyName("richtexts")]
-        public List<Richtext> Richtexts { get; set; }
+        public IEnumerable<RichtextFiled> Richtexts { get; set; }
 
         [JsonPropertyName("links")]
-        public List<LinkElement> Links { get; set; }
+        public IEnumerable<LinkField> Links { get; set; }
 
         [JsonPropertyName("images")]
-        public List<Image> Images { get; set; }
+        public IEnumerable<ImageField<T>> Images { get; set; }
     }
 
-    public partial class Image
+    public class ImageField<T>
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
 
         [JsonPropertyName("image")]
-        public string ImageImage { get; set; }
+        public T Image { get; set; }
     }
 
-    public partial class LinkElement
+    public class LinkField
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
 
         [JsonPropertyName("link")]
-        public LinkLink Link { get; set; }
+        public Link Link { get; set; }
     }
 
-    public partial class LinkLink
+    public class Link
     {
         [JsonPropertyName("title")]
         public string Title { get; set; }
@@ -65,21 +75,21 @@ namespace SbContentManager.Entry
         public Uri Href { get; set; }
     }
 
-    public partial class Richtext
+    public class RichtextFiled
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
 
         [JsonPropertyName("richtext")]
-        public string RichtextRichtext { get; set; }
+        public string Richtext { get; set; }
     }
 
-    public partial class Text
+    public class TextField
     {
         [JsonPropertyName("key")]
         public string Key { get; set; }
 
         [JsonPropertyName("text")]
-        public string TextText { get; set; }
+        public string Text { get; set; }
     }
 }

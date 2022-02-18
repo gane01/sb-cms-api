@@ -244,8 +244,8 @@ public static partial class Api
 
 	// TODO this is a temp api just to test asset copy feature
 	private static async Task<IResult> CopyAssets([FromBody] AssetCopyRequestDto assetCopyRequest, AssetEffect assetEffect) {
-		var result = await assetEffect.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
-		return Results.Ok(result);
+		//var result = await assetEffect.Copy(assetCopyRequest.AssetIds, assetCopyRequest.FolderId);
+		return Results.Ok();
 	}
 
 	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect) {
@@ -254,7 +254,7 @@ public static partial class Api
 		//	"templateId": "sbsm_entity_test",
 		//	"contentIds": ["blt2915fd861a6c73b6"],
 		//	"folderId": "bltb8b7ccd16469ebca",
-		//	"languageCodes": ["en-us", "it"]
+		//	"languageCodes": ["it"]
 		//}
 
 		try

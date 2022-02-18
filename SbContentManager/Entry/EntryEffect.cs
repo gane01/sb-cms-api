@@ -17,98 +17,87 @@ namespace SbContentManager.Entry
 			this.assetEffect = assetEffect;
 		}
 
-		public async Task<IEnumerable<string>> Copy(string contentType, IEnumerable<string> entryIds, string folderId, IEnumerable<string> languageCodes)
-		{
-			// Get get entries
+		public async Task<IEnumerable<SbsmEntity<string>>> Copy(string contentType, IEnumerable<string> entryIds, string folderId, IEnumerable<string> languageCodes) {
 			var entries = await contentstackClient.GetEntries(contentType, entryIds);
-			// Get entry assets pairs: { entryId:assetId }
-			var entryAssetsPairs = GetEntryAssets(entries);
-			// Get copied asset pairs: { assetId:copiedAssetId }
-			var assetIdPairs = await assetEffect.Copy(entryAssetsPairs.Select(x => x.Value).Distinct(), folderId);
-			// create new entries with new assets
-			var entryIdPairs = CreateEntry(entries, languageCodes, entryAssetsPairs, assetIdPairs);
-			// publish entries
-			// publish assets
-			// return ids of created entries
-			return new List<string>();
+			var sbsmEntities = JsonSerializer.Deserialize<SbsmEntities<JsonElement>>(entries);
+			return await CopyEntries(contentType, sbsmEntities.Entries, languageCodes, folderId);
 		}
-        private IEnumerable<JsonElement> CreateEntry(JsonElement entries, IEnumerable<string> languageCodes, IEnumerable<KeyValuePair<string, string>> entryAssetsPairs, IEnumerable<KeyValuePair<string, string>> assetIdPairs)
-        {
-			var result = new List<JsonElement>();
 
-			foreach (var entry in entries.GetProperty("entries").EnumerateArray()) {
-				var entryObj = JsonNode.Parse(@"{}");
-				(entryObj as JsonObject).Add("entry", JsonSerializer.Deserialize<JsonNode>(entry));
-				RemoveLanguages(languageCodes, ref entryObj);
-				UpdateAssets(entryAssetsPairs, ref entryObj);
-				result.Add(entryObj.Deserialize<JsonElement>());
-			}
-
-			return result;
-        }
-
-        private IEnumerable<KeyValuePair<string, string>> GetEntryAssets(JsonElement entries) {
-			var result = new List<KeyValuePair<string, string>>();
-
-			// Todo EnumerateArray is a disposable resource. should it use a using block?
-			// Todo flatten this nested foreach loop
-			foreach (var entry in entries.GetProperty("entries").EnumerateArray()) 
+		private async Task<IEnumerable<SbsmEntity<string>>> CopyEntries(string contentType, IEnumerable<Entry<JsonElement>> entries, IEnumerable<string> languageCodes, string folderId)
+		{
+			var tasks = new List<Task<SbsmEntity<string>>>();
+			foreach (var entry in entries)
 			{
-				foreach (var locale in entry.GetProperty("locales").EnumerateArray())
+				tasks.Add(CopyEntry(contentType, entry, languageCodes, folderId));
+			}
+			await Task.WhenAll(tasks.ToArray());
+			return tasks.Select(task => task.Result);
+
+			/*
+			var result = new List<SbsmEntity<string>>();
+			foreach (var entry in entries)
+			{
+				result.Add(await CopyEntry(contentType, entry, languageCodes, folderId));
+			}
+			return result;
+			*/
+		}
+
+		private async Task<SbsmEntity<string>> CopyEntry(string contentType, Entry<JsonElement> entry, IEnumerable<string> languageCodes, string folderId) {
+			var newEntry = new SbsmEntity<string>
+			{
+				Entry = new Entry<string>
 				{
-					if (locale.TryGetProperty("images", out JsonElement images))
-					{
-						foreach (var image in images.EnumerateArray())
-						{
-							var entryId = entry.GetProperty("uid").GetString();
-							var imageElement = image.GetProperty("image");
-							if (imageElement.ValueKind == JsonValueKind.Null)
-							{
-								throw new KeyNotFoundException($"Image element not found for entry: {entryId}");
-							}
-							else 
-							{
-								var assetId = imageElement.GetProperty("uid").GetString();
-								result.Add(new KeyValuePair<string, string>(entryId, assetId));
-							}
-						}
-					}
+					Title = $"{entry.Title} - 3",
+					Tags = entry.Tags,
+					Locales = await CopyLocales(languageCodes, entry.Locales, folderId)
 				}
-            }
+			};
 
+			var result = await contentstackClient.CreateEntry(contentType, JsonSerializer.SerializeToElement(newEntry));
+			newEntry.Entry.Id = result.Data.Uid;
+			return newEntry;
+		}
+
+		private async Task<IEnumerable<Locale<string>>> CopyLocales(IEnumerable<string> languageCodes, IEnumerable<Locale<JsonElement>> locales, string folderId)
+		{
+			var newLocales = locales.Where(locale => !languageCodes.Contains(locale.LanguageCode));
+			var result = new List<Locale<string>>();
+			foreach (var newLocale in newLocales) {
+				result.Add(new Locale<string>() {
+					LanguageCode = newLocale.LanguageCode,
+					Links = newLocale.Links,
+					Richtexts = newLocale.Richtexts,
+					Texts = newLocale.Texts,
+					Images = await CopyImages(newLocale.Images, folderId)
+				});
+			}
 			return result;
 		}
 
-		private void RemoveLanguages(IEnumerable<string> languageCodes, ref JsonNode entry) 
+		private async Task<IEnumerable<ImageField<string>>> CopyImages(IEnumerable<ImageField<JsonElement>> images, string folderId)
 		{
-			var removeLanguages = entry["entry"]["locales"].AsArray()
-				.Where(locale => languageCodes.Contains(locale["language_code"].ToString()))
-				.ToList();
-
-			foreach (var language in removeLanguages) {
-				entry["entry"]["locales"]!.AsArray().Remove(language);
-			}
-		}
-		private void UpdateAssets(IEnumerable<KeyValuePair<string, string>> entryAssetsPairs, ref JsonNode entry)
-		{
-			foreach (var locale in entry["entry"]["locales"].AsArray())
+			var result = new List<ImageField<string>>();
+			foreach (var image in images)
 			{
-				foreach (var image in locale["images"].AsArray())
+				var asset = new AssetModel
 				{
-					var entryAssetsPair = entryAssetsPairs.FirstOrDefault(x => x.Key.Equals(image["image"]["uid"].ToString()));
-					if (String.IsNullOrEmpty(entryAssetsPair.Value))
-					{
-						throw new Exception($"Failed to find the copied asset uid for entry image: {entry["entry"]["uid"]}");
-					}
-					else
-					{
-						// Create JsonELement from JsonObject
-						// https://www.c-sharpcorner.com/article/new-programming-model-for-handling-json-in-net-6/
-						//image.Image = JsonSerializer.Deserialize<JsonElement>(new JsonObject { ["image"] = copiedAssetId.Value })
-						image["image"] = entryAssetsPair.Value;
-					}
+					Id = image.Image.GetProperty("uid").GetString(),
+					Title = image.Image.GetProperty("title").GetString(),
+					Description = image.Image.TryGetProperty("description", out JsonElement descriptionElement) ? descriptionElement.GetString() : string.Empty,
+					FileName = image.Image.GetProperty("filename").GetString(),
+					ContentType = image.Image.GetProperty("content_type").GetString(),
+					Url = image.Image.GetProperty("url").GetString(),
+					Tags = image.Image.GetProperty("tags").EnumerateArray().Select((tag) => tag.GetString()).ToArray()
 				};
+
+				result.Add(new ImageField<string>
+				{
+					Key = image.Key,
+					Image = await assetEffect.Copy(asset, folderId)
+			});
 			}
+			return result;
 		}
 	}
 }
