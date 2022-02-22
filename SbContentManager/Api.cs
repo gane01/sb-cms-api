@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Refit;
 using SbContentManager.Asset;
 using SbContentManager.Entry;
+using Swashbuckle.AspNetCore.Annotations;
 
 public static partial class Api
 {
@@ -16,6 +17,7 @@ public static partial class Api
 		app.MapMethods("/contents/{templateId}/{contentId}", new[] { "PATCH" }, UpdateEntry); // There`s no MapPatch in minimal api, so create one
 		app.MapPost("/contents/publish", PublishEntry);
 		app.MapPost("/contents/publish/bulk/{templateId}/bulk", BulkPublishEntries);
+		app.MapPost("/contents/copy", CopyEntries);
 		app.MapGet("/assets/{assetId}", GetAsset);
 		app.MapGet("/assets/", GetAssets);
 		app.MapPost("/assets/", CreateAsset);
@@ -23,7 +25,6 @@ public static partial class Api
 		app.MapGet("/assets/{assetId}/ref", GetAssetRef);
 		app.MapGet("/assets/folder/{folderName}", GetAssetFolder);
 		app.MapPost("/assets/publish/{assetId}", PublishAsset);
-		app.MapPost("/contents/copy", CopyEntries);
 	}
 
 	private static async Task<IResult> GetEntry(string templateId, string contentId, ContentstackClient contentstackClient)
@@ -126,6 +127,31 @@ public static partial class Api
 		{
 			// TODO Environment string and locale will come from env variable.
 			return Results.Ok(await contentstackClient.BulkPublishEntries(templateId, contentIds));
+		}
+		catch (ApiException e)
+		{
+			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
+		}
+		catch (Exception e)
+		{
+			return Results.Problem(e.Message);
+		}
+	}
+
+	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect)
+	{
+
+		//{
+		//	"templateId": "sbsm_entity_test",
+		//	"contentIds": ["blt2915fd861a6c73b6"],
+		//	"folderId": "bltb8b7ccd16469ebca",
+		//	"languageCodes": ["it"]
+		//}
+
+		try
+		{
+			var result = await entryEffect.Copy(entryCopyRequest.TemplateId, entryCopyRequest.ContentIds, entryCopyRequest.FolderId, entryCopyRequest.LanguageCodes);
+			return Results.Ok(result);
 		}
 		catch (ApiException e)
 		{
@@ -250,29 +276,6 @@ public static partial class Api
 		}
 		catch (ApiException e)
 		{
-			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
-		}
-		catch (Exception e)
-		{
-			return Results.Problem(e.Message);
-		}
-	}
-
-	private static async Task<IResult> CopyEntries([FromBody] EntryCopyRequestDto entryCopyRequest, EntryEffect entryEffect) {
-
-		//{
-		//	"templateId": "sbsm_entity_test",
-		//	"contentIds": ["blt2915fd861a6c73b6"],
-		//	"folderId": "bltb8b7ccd16469ebca",
-		//	"languageCodes": ["it"]
-		//}
-
-		try
-		{
-			var result = await entryEffect.Copy(entryCopyRequest.TemplateId, entryCopyRequest.ContentIds, entryCopyRequest.FolderId, entryCopyRequest.LanguageCodes);
-			return Results.Ok(result);
-		}
-		catch (ApiException e) {
 			return Results.Problem(statusCode: (int?)e.StatusCode, detail: e.Message);
 		}
 		catch (Exception e)
